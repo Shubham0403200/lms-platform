@@ -1,116 +1,105 @@
 "use client";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import {Dialog,DialogContent,DialogDescription,DialogFooter,DialogHeader,DialogTitle,DialogTrigger} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { ApiResponse } from "@/types";
-import { zodResolver } from "@hookform/resolvers/zod";
-import axios, { AxiosError } from "axios";
-import React, { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Loader2 } from "lucide-react";
-import useUserStore from "@/app/store/authStore";
-import { bookingFormSchema } from "@/backend/schemas/bookingFormSchema";
-import {Select,SelectContent,SelectItem,SelectTrigger,SelectValue} from "@/components/ui/select";
 
+// ---------------- TEMP MODEL ----------------
+interface BookingForm {
+  username: string;
+  email: string;
+  targetedBand: string;
+  strength: string;
+  weakness: string;
+  targetedCountry: string;
+  slotDate: Date;
+  slot: string;
+}
+
+// ---------------- TEMP DATA ----------------
+const tempUser = {
+  username: "John Doe",
+  email: "john@example.com",
+};
+
+const tempSlots = ["10:00 AM", "12:00 PM", "2:00 PM", "4:00 PM"];
+
+// ---------------- FORM SCHEMA ----------------
+const bookingFormSchema = z.object({
+  username: z.string(),
+  email: z.string().email(),
+  targetedBand: z.string().min(1),
+  strength: z.string().min(1),
+  weakness: z.string().min(1),
+  targetedCountry: z.string().min(1),
+  slotDate: z.date(),
+  slot: z.string().min(1),
+});
+
+type BookingFormValues = z.infer<typeof bookingFormSchema>;
+
+// ---------------- COMPONENT ----------------
 const BookSession = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [availableSlots, setAvailableSlots] = useState<string[]>(tempSlots);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-
-  const user = useUserStore((state) => state.user);
 
   const { toast } = useToast();
 
-  const form = useForm<z.infer<typeof bookingFormSchema>>({
+  const form = useForm<BookingFormValues>({
     defaultValues: {
-      weakness: "listening",
-      strength: "listening",
+      username: tempUser.username,
+      email: tempUser.email,
       targetedBand: "",
+      strength: "listening",
+      weakness: "listening",
       targetedCountry: "",
       slotDate: new Date(),
       slot: "",
-      username: "",
-      email: "",
     },
-    resolver: zodResolver(bookingFormSchema),
   });
 
+  // Simulate dynamic slot update
   useEffect(() => {
-    async function fetchData() {
-      const endpoint = "/api/slots";
-      const body = { date: selectedDate };
-
-      try {
-        const response = await axios.post(endpoint, body, {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-        setAvailableSlots(response.data.slots);
-      } catch (error) {
-        console.log("Error fetching data:", error);
-      }
-    }
-
-    fetchData();
+    // Here you could dynamically change slots based on selectedDate
+    setAvailableSlots(tempSlots);
   }, [selectedDate]);
 
-  const onSubmit = async (data: z.infer<typeof bookingFormSchema>) => {
+  const onSubmit = (data: BookingFormValues) => {
     setIsSubmitting(true);
 
-    if (!user?.username || !user?.email) {
+    // Simulate API response
+    setTimeout(() => {
       toast({
-        title: "Failed",
-        description: " Please Login to continue",
-        variant: "destructive",
+        title: "Success",
+        description: `Demo booked successfully on ${data.slotDate.toDateString()} at ${data.slot}`,
       });
-      return;
-    }
-
-    const slotDate = new Date(data.slotDate);
-    
-    try {
-      const response = await axios.post<ApiResponse>(`/api/bookSlot`, {
-        ...data,
-        username: user?.username,
-        email: user?.email,
-        slotDate: slotDate,
+      form.reset({
+        ...form.getValues(),
+        slot: "",
       });
-
-      if (response.data.success) {
-        form.reset();
-        toast({
-          title: "Success",
-          description: response.data.message,
-        });
-      } else {
-        toast({
-          title: "Booking Failed",
-          description: response.data.message,
-          variant: "destructive",
-        });
-      }
       setIsSubmitting(false);
-
-    } catch (error) {
-      console.log("Error during booking:", error);
-      const axiosError = error as AxiosError<ApiResponse>;
-
-      let errorMessage =
-        axiosError.response?.data.message ||
-        "There was a problem with booking demo. Please try again.";
-
-      toast({
-        title: "Commenting Failed!",
-        description: errorMessage,
-        variant: "destructive",
-      });
-
-      setIsSubmitting(false);
-    }
+    }, 1000);
   };
 
   return (
@@ -120,62 +109,58 @@ const BookSession = () => {
           ▶️ Book Demo
         </Button>
       </DialogTrigger>
+
       <DialogContent className="p-3 md:p-4 sm:mx-4 w-[90vw] rounded-md sm:max-w-[425px] max-h-[85vh] md:max-w-xl overflow-y-auto">
         <DialogHeader className="items-start">
           <DialogTitle>Book Now</DialogTitle>
           <DialogDescription className="text-justify text-h6-clamp text-slate-700 ">
-            Reserve your spot now to experience our demo session. Kindly Login First to book your demo session. 
+            Reserve your spot now to experience our demo session.
           </DialogDescription>
         </DialogHeader>
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {/* Username */}
             <FormField
               name="username"
               control={form.control}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel> User Name </FormLabel>
-                  <Input
-                    {...field}
-                    type="text"
-                    placeholder="Eg. John"
-                    value={user?.username}
-                    disabled
-                  />
+                  <FormLabel>User Name</FormLabel>
+                  <FormControl>
+                    <input {...field} disabled className="w-full border p-2 rounded-md" />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            {/* Email */}
             <FormField
               name="email"
               control={form.control}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel> Email </FormLabel>
-                  <Input
-                    {...field}
-                    type="email"
-                    placeholder="Eg. Johndoe@gmail.com"
-                    value={user?.email}
-                    disabled
-                  />
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <input {...field} disabled className="w-full border p-2 rounded-md" />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            {/* Targeted Band */}
             <FormField
               name="targetedBand"
               control={form.control}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel> Band Targeted </FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={String(field.value)}
-                  >
+                  <FormLabel>Targeted Band</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select your targeted Band" />
+                        <SelectValue placeholder="Select Band" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -190,19 +175,18 @@ const BookSession = () => {
                 </FormItem>
               )}
             />
+
+            {/* Strength */}
             <FormField
               name="strength"
               control={form.control}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel> Strength </FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+                  <FormLabel>Strength</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select your strength!" />
+                        <SelectValue placeholder="Select Strength" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -216,19 +200,18 @@ const BookSession = () => {
                 </FormItem>
               )}
             />
+
+            {/* Weakness */}
             <FormField
               name="weakness"
               control={form.control}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel> Weakness </FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+                  <FormLabel>Weakness</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select your Weakness!" />
+                        <SelectValue placeholder="Select Weakness" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -242,85 +225,74 @@ const BookSession = () => {
                 </FormItem>
               )}
             />
+
+            {/* Targeted Country */}
             <FormField
               name="targetedCountry"
               control={form.control}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel> Targeted Country </FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+                  <FormLabel>Targeted Country</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select your Country you have targeted!" />
+                        <SelectValue placeholder="Select Country" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {[
-                        "Australia",
-                        "Canada",
-                        "USA",
-                        "New Zealand",
-                        "Others",
-                      ].map((country) => (
-                        <SelectItem key={country} value={country}>
-                          {country}
-                        </SelectItem>
-                      ))}
+                      {["Australia", "Canada", "USA", "New Zealand", "Others"].map(
+                        (country) => (
+                          <SelectItem key={country} value={country}>
+                            {country}
+                          </SelectItem>
+                        )
+                      )}
                     </SelectContent>
                   </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            {/* Slot Date */}
             <FormField
               name="slotDate"
               control={form.control}
               render={({ field }) => (
-                <FormItem className="flex flex-col items-start">
-                  <FormLabel> Slot Date </FormLabel>
+                <FormItem>
+                  <FormLabel>Slot Date</FormLabel>
                   <input
                     type="date"
                     {...field}
-                    value={
-                      field.value
-                        ? field.value.toISOString().substring(0, 10)
-                        : ""
-                    }
+                    value={field.value.toISOString().substring(0, 10)}
                     onChange={(e) => {
-                      const date = e.target.value
-                        ? new Date(e.target.value)
-                        : new Date();
+                      const date = new Date(e.target.value);
                       field.onChange(date);
                       setSelectedDate(date);
                     }}
-                    className="w-full outline-none border text-h6-clamp p-2 rounded-md"
+                    className="w-full border p-2 rounded-md"
                   />
                   <FormMessage />
                 </FormItem>
               )}
             />
 
+            {/* Slot */}
             <FormField
               name="slot"
               control={form.control}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel> Select Slot </FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+                  <FormLabel>Select Slot</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select your slot!" />
+                        <SelectValue placeholder="Select Slot" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {availableSlots?.map((slot, index) => (
-                        <SelectItem key={index} value={slot}>
+                      {availableSlots.map((slot, idx) => (
+                        <SelectItem key={idx} value={slot}>
                           {slot}
                         </SelectItem>
                       ))}
@@ -332,23 +304,15 @@ const BookSession = () => {
             />
 
             <DialogFooter>
-              {/* <DialogClose asChild > */}
-              <Button
-                type="submit"
-                className="text-xs"
-                size="sm"
-                disabled={isSubmitting}
-              >
+              <Button type="submit" size="sm" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Please Wait!
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Please Wait!
                   </>
                 ) : (
                   "Book Now!"
                 )}
               </Button>
-              {/* </DialogClose> */}
             </DialogFooter>
           </form>
         </Form>
