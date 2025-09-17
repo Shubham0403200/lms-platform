@@ -1,7 +1,6 @@
 "use client";
 import useUserStore from "@/app/store/authStore";
 import { Preview } from "@/components/context/preview";
-import AddComments from "@/components/main/add-comment";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/use-toast";
