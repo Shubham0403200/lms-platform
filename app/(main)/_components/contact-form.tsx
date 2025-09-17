@@ -1,7 +1,6 @@
 "use client";
 import { Form, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/components/ui/use-toast";
-import { ApiResponse } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios, { AxiosError } from "axios";
 import { Loader2 } from "lucide-react";
@@ -35,27 +34,13 @@ const ContactForm = () => {
   const onSubmit = async (data: z.infer<typeof contactFormSchema>) => {
     setIsSubmitting(true);
     try {
-      const response = await axios.post<ApiResponse>("/api/contact", data);
-
-      if (response.data.success) {
         toast({
           title: "Message Sent ✅",
-          description: response.data.message,
         });
-        form.reset();
-      } else {
-        toast({
-          title: "Failed",
-          description: response.data.message,
-          variant: "destructive",
-        });
-      }
     } catch (error) {
-      const axiosError = error as AxiosError<ApiResponse>;
       toast({
         title: "Something went wrong!",
         description:
-          axiosError.response?.data.message ||
           "Unable to submit the message. Try again later.",
         variant: "destructive",
       });

@@ -1,7 +1,6 @@
 "use client";
 import { Form, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/components/ui/use-toast";
-import { ApiResponse } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AxiosError } from "axios";
 import React, { useState } from "react";
@@ -47,11 +46,9 @@ const FeedbackForm = () => {
         });
         form.reset();
     } catch (error) {
-      const axiosError = error as AxiosError<ApiResponse>;
       toast({
         title: "Error Occurred",
         description:
-          axiosError.response?.data.message ||
           "An unexpected error occurred. Please try again later.",
         variant: "destructive",
       });
