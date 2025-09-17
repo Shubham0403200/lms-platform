@@ -52,7 +52,14 @@
 
 // export default useUserStore;
 
-import { User } from "@/backend/models/User";
+export interface User { 
+  name: string; 
+  email: string;
+  role: string;
+  password: string;
+  username: string; 
+}
+
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
