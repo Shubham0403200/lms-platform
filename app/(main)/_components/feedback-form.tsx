@@ -3,12 +3,11 @@ import { Form, FormField, FormItem, FormLabel, FormMessage } from "@/components/
 import { useToast } from "@/components/ui/use-toast";
 import { ApiResponse } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import axios, { AxiosError } from "axios";
+import { AxiosError } from "axios";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Loader2, Star } from "lucide-react";
-import useUserStore from "@/app/store/authStore";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,7 +27,6 @@ const feedbackSchema = z.object({
 
 const FeedbackForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const user = useUserStore((state) => state.user);
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof feedbackSchema>>({
@@ -40,36 +38,14 @@ const FeedbackForm = () => {
   });
 
   const onSubmit = async (data: z.infer<typeof feedbackSchema>) => {
-    if (!user?.username) {
-      toast({
-        title: "Please Login First",
-        description: "You need to be logged in to submit feedback.",
-        variant: "destructive",
-      });
-      return;
-    }
 
     setIsSubmitting(true);
     try {
-      const response = await axios.post<ApiResponse>("/api/addFeedback", {
-        feedback: data.feedback,
-        username: user.username,
-        stars: data.stars,
-      });
-
-      if (response.data.success) {
         toast({
           title: "Feedback Submitted",
-          description: response.data.message,
+          description: "Thank you for your feedback!",
         });
         form.reset();
-      } else {
-        toast({
-          title: "Submission Failed",
-          description: response.data.message,
-          variant: "destructive",
-        });
-      }
     } catch (error) {
       const axiosError = error as AxiosError<ApiResponse>;
       toast({

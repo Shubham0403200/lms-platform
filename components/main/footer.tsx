@@ -1,13 +1,11 @@
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
-import axios, { AxiosError } from "axios";
 import { useToast } from "../ui/use-toast";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { footerCompany, footerLegal, footerLinks, footerServices } from "@/data";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
-import { ApiResponse } from "@/types";
 import { Loader2 } from "lucide-react";
 
 const Footer = () => {
@@ -16,6 +14,7 @@ const Footer = () => {
   const { toast } = useToast();
 
   const handleSubscribe = async () => {
+
     if (!email) {
       toast({ title: "Enter an email", description: "We need your email to send updates." });
       return;
@@ -23,14 +22,12 @@ const Footer = () => {
 
     setIsSubmitting(true);
     try {
-      const response = await axios.post<ApiResponse>("/api/dashboard/admin/newsLetter", { email });
-      toast({ title: response.data.message, description: "You'll receive IELTS news and updates." });
+      toast({ title: "Email Submitted!", description: "You'll receive IELTS news and updates." });
       setEmail("");
     } catch (error) {
-      const axiosError = error as AxiosError<ApiResponse>;
       toast({
         title: "Subscription failed!",
-        description: axiosError.response?.data.message || "Something went wrong.",
+        description: "Something went wrong.",
         variant: "destructive",
       });
     } finally {
